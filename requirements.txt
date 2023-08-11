@@ -9,3 +9,5 @@ pip install youtube-transcript-api
 python3 -m pip install spacy==2.1.0
 python3 -m spacy download en_core_web_sm
 pip install neuralcoref --no-binary neuralcoref
+pip install streamlit-option-menu
+pip install streamlit-lottie

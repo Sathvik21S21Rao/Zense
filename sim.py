@@ -1,5 +1,4 @@
 import numpy as np
-# from nltk.tokenize import sent_tokenize
 from nltk.stem import WordNetLemmatizer
 from nltk.tokenize import sent_tokenize,word_tokenize
 from nltk.corpus import stopwords
@@ -12,12 +11,32 @@ import nltk
 import re
 import neuralcoref
 import spacy 
+from PyPDF2 import PdfReader
 from sklearn.feature_extraction.text import TfidfVectorizer
 
 nltk.download('stopwords')
 nltk.download('punkt')
 load_dotenv()
 hf_token=os.environ.get("hf_token")
+
+def valid_link (link):
+    youtube_pattern = r"(?:https?:\/\/)?(?:www\.)?(?:youtube\.com|youtu\.be)\/(?:watch\?v=)?([a-zA-Z0-9_-]+)"
+    match = re.match(youtube_pattern, link)
+    if match and match.group(1):
+        return True
+    else:
+        return False
+def save_uploaded_file(text,uploaded_file):
+    with open(f"./{text}/{uploaded_file.name}", "wb") as f:
+        f.write(uploaded_file.getbuffer())
+
+def get_pdf_text(pdf_docs):
+    text = ""
+    for pdf in pdf_docs:
+        pdf_reader = PdfReader(pdf)
+        for page in pdf_reader.pages:
+            text += page.extract_text()
+    return text
 
 def remove_punctuation(text):
     text_without_punct = re.sub(r'[^\w\s]', '', text)
@@ -48,9 +67,8 @@ def fill_context(text):
     index.add(context)
     return index,sentences,vectorizer
 
-def similarity_search(index,q,sentences,vectorizer,p=None):
+def similarity_search(index,q,sentences,vectorizer,offset,p=None):
     
-
     if p is None:
         q=q.lower()
         q=remove_stopwords(q)
@@ -64,7 +82,7 @@ def similarity_search(index,q,sentences,vectorizer,p=None):
     
     nearest_sentences = []
     similar_indices=indices[0][distances[0]<1.5]
-    print(distances)
+    #print(distances)
     most_similar=similar_indices[0]
     similar_indices=list(similar_indices)
     similar_indices.sort()
@@ -73,9 +91,27 @@ def similarity_search(index,q,sentences,vectorizer,p=None):
         nearest_sentences.append(sentences[i])
         
     ind=similar_indices.index(most_similar)
-    nearest_sentences=[nearest_sentences[i].strip().capitalize()+" " for i in range(len(nearest_sentences))]
-    nearest_sentences[ind]="<b>"+nearest_sentences[ind]+"   </b>"
-    nearest_sentences=[i for i in nearest_sentences if i]
+    nearest_sentences=["<b style='color:#ff4b4b'>"+nearest_sentences[i].strip().capitalize()+" </b>" for i in range(len(nearest_sentences))]
+    nearest_sentences[ind]="<i>"+nearest_sentences[ind]+"   </i>"
+    similar_indices=[similar_indices[i] for i in range(len(similar_indices)) if nearest_sentences[i]]
+    
+    for i in range(len(similar_indices)):
+        para=""
+        
+        for j in range(similar_indices[i]-offset,similar_indices[i]):
+            if j>=0:
+                try:
+                    para+=sentences[j].strip().capitalize()+" "
+                except:
+                    pass 
+        nearest_sentences[i]=para+nearest_sentences[i]
+        para=""
+        for j in range(similar_indices[i]+1,similar_indices[i]+offset+1):
+            try:
+                para+=sentences[j].strip().capitalize()+" "
+            except:
+                pass 
+        nearest_sentences[i]+=para
     return nearest_sentences,p
 
         
