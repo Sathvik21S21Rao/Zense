@@ -11,3 +11,4 @@ python3 -m spacy download en_core_web_sm
 pip install neuralcoref --no-binary neuralcoref
 pip install streamlit-option-menu
 pip install streamlit-lottie
+pip install python-rake

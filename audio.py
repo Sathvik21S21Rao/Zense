@@ -54,8 +54,11 @@ def audio_to_text(filename):
     text=""
     
     for i in range(ctr+1):
-        output = query(f"./audios/chunk{i}.wav",API_URL,headers)
-        print(output)
+        while True:
+            output = query(f"./audios/chunk{i}.wav",API_URL,headers)
+            if "error" not in output:
+                break
+        # print(output)
         text+=output.get("text","")
     files=os.listdir("./audios")
     for i in files:

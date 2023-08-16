@@ -2,10 +2,21 @@ import streamlit as st
 from database import *
 import json 
 from streamlit_lottie import st_lottie
-
+import requests 
 def load_robot_lottie():
     with open("./style_files/robot.json") as fh:
         return json.load(fh)
+    
+def emailverifier(email):
+    response = requests.get(
+        "https://isitarealemail.com/api/email/validate",
+        params = {'email': email})
+
+    status = response.json()['status']
+    if status=="valid":
+        return True
+    else:
+        return False
 def login():
 
     with st.container():
@@ -30,7 +41,7 @@ def login():
                 submit = st.form_submit_button("Submit",)
                 if submit:
                     check=validate_login(email=email,password=password)
-                    if not check:
+                    if check==False:
                         st.error("Password is incorrect")
                         
                     elif check is None:
@@ -57,6 +68,8 @@ def signup():
         
         submit = st.form_submit_button("Submit")
         if submit:
+            # if not emailverifier(email=email):
+            #     st.error("Not a valid email")
             if passw!=confirm:
                 st.error("Passwords don't match")
             else:

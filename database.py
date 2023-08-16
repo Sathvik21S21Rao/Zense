@@ -3,7 +3,7 @@ from dotenv import load_dotenv
 import os
 import uuid
 import hashlib
-
+import pickle
 
 def hash_password_sha256(plain_password, salt=None):
     if salt is None:
@@ -95,6 +95,15 @@ def delete(userid):
     con=m.connect(user=mysql_user,password=mysql_pass,db="ai_chat",host="localhost")
     if con.is_connected():
         cursor=con.cursor()
-        cursor.execute(f'''delete from Users where id={userid}''')
+        cursor.execute(f'''delete from Users where id="{userid}"''')
         con.commit()
         con.close()
+    with open("chats.bin","rb") as fh:
+        d=pickle.load(fh)
+        updated_d={}
+        for key in d:
+            if userid not in key:
+                updated_d.update({key:d[key]})
+    with open("chats.bin","wb") as fh:
+        pickle.dump(updated_d,fh)
+

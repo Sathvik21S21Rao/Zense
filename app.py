@@ -33,6 +33,7 @@ def main():
     else:
         st.markdown('<meta name="viewport" content="width=device-width, initial-scale=1.0">',unsafe_allow_html=True)
         st.session_state["loaded"]=False
+    
         chat_page()
 if __name__=="__main__":
     main()

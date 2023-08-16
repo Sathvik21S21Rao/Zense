@@ -5,8 +5,7 @@ import pickle,json
 from streamlit_option_menu import option_menu
 import time
 from database import *
-from streamlit_card import card
-from streamlit_lottie import st_lottie,st_lottie_spinner
+from streamlit_lottie import st_lottie
 
 def load_robot_lottie():
     with open("./style_files/robot.json") as fh:
@@ -83,7 +82,7 @@ def chat_page():
         if main_menu=="Home":
             with st.sidebar:
                     
-                    selected=option_menu(menu_title="Previous Chats",options=["New Chat"]+st.session_state["previous_titles"],icons=["plus-circle-fill"],key="selected")
+                    selected=option_menu(menu_title="Previous Chats",options=["New Chat"]+st.session_state["previous_titles"][::-1],icons=["plus-circle-fill"],key="selected")
                     
                     st.divider()
                     if st.session_state.get("menu_option")!=selected:
@@ -150,16 +149,16 @@ def chat_page():
                                                 x=audio_to_text(files[i].name)
                                                 text=text+x+"."
                                     
-                                            index,sentences,vectorizer=fill_context(text)
-                                            d={"title":title_generator(text),"index":index,"text":text,"sentences":sentences,"chat_history":[],"vectorizer":vectorizer}
-                                            st.session_state["chat_info"]=d
-                                            st.session_state["chat_id"]=new_chat(st.session_state["user"])
-                                            st.session_state["computed"]=True
-                                            st.success("Computed")
-                                            store_chat()
-                                            st.session_state.menu_option="None"
-                                            #selected=option_menu()
-                                            st.experimental_rerun()
+                                        index,sentences,vectorizer=fill_context(text)
+                                        d={"title":title_generator(text),"index":index,"text":text,"sentences":sentences,"chat_history":[],"vectorizer":vectorizer}
+                                        st.session_state["chat_info"]=d
+                                        st.session_state["chat_id"]=new_chat(st.session_state["user"])
+                                        st.session_state["computed"]=True
+                                        st.success("Computed")
+                                        store_chat()
+                                        st.session_state.menu_option="None"
+                                        #selected=option_menu()
+                                        st.experimental_rerun()
                                             
                     elif not st.session_state.computed:
 
@@ -216,7 +215,8 @@ def chat_page():
                     st.session_state["chat_info"]["chat_history"].append({"question":input+" -One Line","response":response.replace("\n","<br><br>")})
                     
                 if "chat_history" in st.session_state["chat_info"]:
-                    for i in st.session_state["chat_info"]["chat_history"]:
+                    # print(st.session_state["chat_info"]["sentences"])
+                    for i in st.session_state["chat_info"]["chat_history"][::-1]:
                         with st.chat_message("user",):
                             st.write(i["question"],unsafe_allow_html=True)
                         with st.chat_message("assistant",):
@@ -243,13 +243,9 @@ def chat_page():
                 st.markdown("<style></style>",unsafe_allow_html=True)
                 st.warning("Doing this will permanently delete your account. Are you Sure?")
                 if st.button("Yes",type="primary"):
-                    delete()
+                    delete(st.session_state["user"])
                     st.session_state.clear()
-                    st.experimental_rerun()
-            
-                
-        elif main_menu=="Help":
-            pass            
+                    st.experimental_rerun()          
 
 
         elif main_menu=="Logout":

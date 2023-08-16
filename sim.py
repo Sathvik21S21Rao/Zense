@@ -13,7 +13,8 @@ import neuralcoref
 import spacy 
 from PyPDF2 import PdfReader
 from sklearn.feature_extraction.text import TfidfVectorizer
-
+from sentence_transformers import SentenceTransformer
+import RAKE
 nltk.download('stopwords')
 nltk.download('punkt')
 load_dotenv()
@@ -30,12 +31,12 @@ def save_uploaded_file(text,uploaded_file):
     with open(f"./{text}/{uploaded_file.name}", "wb") as f:
         f.write(uploaded_file.getbuffer())
 
-def get_pdf_text(pdf_docs):
+def get_pdf_text(pdf):
     text = ""
-    for pdf in pdf_docs:
-        pdf_reader = PdfReader(pdf)
-        for page in pdf_reader.pages:
-            text += page.extract_text()
+    
+    pdf_reader = PdfReader(pdf)
+    for page in pdf_reader.pages:
+        text += page.extract_text()
     return text
 
 def remove_punctuation(text):
@@ -58,11 +59,15 @@ def fill_context(text):
     document=text.lower().replace("\n","")
     document=neural_coreference(document)
     sentences=sent_tokenize(document)
+    sentences=[i for i in sentences if len(i.split())>5]
     sentences1=[]
     for i in sentences:
         sentences1.append(remove_stopwords(i))
-    vectorizer = TfidfVectorizer()
-    context=vectorizer.fit_transform(sentences1).toarray()
+    vectorizer = SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')
+   
+    context=vectorizer.encode(sentences1)
+
+    faiss.normalize_L2(context)
     index = faiss.IndexFlatL2(context.shape[1])
     index.add(context)
     return index,sentences,vectorizer
@@ -72,29 +77,63 @@ def similarity_search(index,q,sentences,vectorizer,offset,p=None):
     if p is None:
         q=q.lower()
         q=remove_stopwords(q)
-        p=vectorizer.transform([q]).toarray() 
+        p=vectorizer.encode([q])
+        faiss.normalize_L2(p)
+       
     i=1
     while i<len(sentences):
         distances, indices = index.search(p, i)
         i+=1
-        if distances.std()>0.07:
+        distances[0]=distances[0]/2
+        if distances[0].std()>0.5:
             break
     
     nearest_sentences = []
-    similar_indices=indices[0][distances[0]<1.5]
-    #print(distances)
-    most_similar=similar_indices[0]
+    similar_indices=indices[0]
     similar_indices=list(similar_indices)
-    similar_indices.sort()
+    #x+(1-x)/10
     
     for i in similar_indices:
         nearest_sentences.append(sentences[i])
-        
-    ind=similar_indices.index(most_similar)
-    nearest_sentences=["<b style='color:#ff4b4b'>"+nearest_sentences[i].strip().capitalize()+" </b>" for i in range(len(nearest_sentences))]
-    nearest_sentences[ind]="<i>"+nearest_sentences[ind]+"   </i>"
-    similar_indices=[similar_indices[i] for i in range(len(similar_indices)) if nearest_sentences[i]]
+    rake = RAKE.Rake(RAKE.SmartStopList())
+    key_words=rake.run(q.lower(), minCharacters = 1, maxWords = 5, minFrequency = 1)
+    lemmatize=WordNetLemmatizer()
+    nearest_sentences1=[remove_stopwords(i) for i in nearest_sentences]
+    key_word_list=[]
     
+    for i in key_words:
+        key_word_list.extend(i[0].split())
+    if not key_word_list:
+        return [],p
+    for i in key_word_list:
+        # print(i,distances)
+        b=lemmatize.lemmatize(i)
+        for j in range(len(nearest_sentences1)):
+            
+            if b not in nearest_sentences1[similar_indices[j]]:
+                distances[0][j]=distances[0][j]+(1-distances[0][j])/len(key_word_list)
+            else:
+                distances[0][j]=distances[0][j]-distances[0][j]/(len(key_word_list))
+
+    for i in range(len(distances[0])):
+        for j in range(len(distances[0])-1-i):
+            if (distances[0][j]>distances[0][j+1]):
+                distances[0][j],distances[0][j+1]=distances[0][j+1],distances[0][j]
+                similar_indices[j],similar_indices[j+1]=similar_indices[j+1],similar_indices[j]
+ 
+    most_similar=similar_indices[0]
+    similar_indices.sort()
+    nearest_sentences=[nearest_sentences[i] for i in range(len(nearest_sentences)) if distances[0][i]<0.4]
+    similar_indices=[similar_indices[i] for i in range(len(similar_indices)) if distances[0][i]<0.4]
+    try:
+        ind=similar_indices.index(most_similar)
+        
+        nearest_sentences=["<b style='color:#ff4b4b'>"+nearest_sentences[i].strip().capitalize()+" </b>" for i in range(len(nearest_sentences))]
+        nearest_sentences[ind]="<i>"+nearest_sentences[ind]+"   </i>"
+        similar_indices=[similar_indices[i] for i in range(len(similar_indices)) if nearest_sentences[i]]
+    except:
+        [],p
+   
     for i in range(len(similar_indices)):
         para=""
         
@@ -104,7 +143,10 @@ def similarity_search(index,q,sentences,vectorizer,offset,p=None):
                     para+=sentences[j].strip().capitalize()+" "
                 except:
                     pass 
-        nearest_sentences[i]=para+nearest_sentences[i]
+        try:
+            nearest_sentences[i]=para+nearest_sentences[i]
+        except:
+            continue
         para=""
         for j in range(similar_indices[i]+1,similar_indices[i]+offset+1):
             try:
@@ -112,6 +154,7 @@ def similarity_search(index,q,sentences,vectorizer,offset,p=None):
             except:
                 pass 
         nearest_sentences[i]+=para
+    
     return nearest_sentences,p
 
         
@@ -149,7 +192,7 @@ def one_line(text,q):
             "options":{"wait_for_model":True},})
         if output.get("error") is None:
             break
-    print(output)
+    
     return output.get("answer")
 
 def title_generator(text):
@@ -167,7 +210,7 @@ def title_generator(text):
         })
         if "error" not in output:
             break
-    print(output)
+    
     return output[0]["generated_text"]
 
 
@@ -215,7 +258,9 @@ def get_transcript(url):
         k=0
         space_index.insert(0,0)
         n=len(space_index)
+       
         corrected_text=""
+        
         while k+250<n:
             corrected_text+=punctuate(text[space_index[k]:space_index[k+250]])
             k=k+250
