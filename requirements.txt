@@ -1,14 +1,13 @@
-sudo apt-get install ffmpeg
-pip install pydub
-pip install pyrebase
-pip install streamlit
-pip install audio-recorder-streamlit
-pip install python-dotenv
-pip install moviepy
-pip install youtube-transcript-api
-python3 -m pip install spacy==2.1.0
-python3 -m spacy download en_core_web_sm
-pip install neuralcoref --no-binary neuralcoref
-pip install streamlit-option-menu
-pip install streamlit-lottie
-pip install python-rake
+pydub
+pyrebase
+streamlit
+audio-recorder-streamlit
+python-dotenv
+moviepy
+youtube-transcript-api
+spacy==2.1.0
+en-core-web-sm
+neuralcoref
+streamlit-option-menu
+streamlit-lottie
+python-rake
