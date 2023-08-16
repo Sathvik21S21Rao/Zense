@@ -92,7 +92,7 @@ def similarity_search(index,q,sentences,vectorizer,offset,p=None):
     similar_indices=indices[0]
     similar_indices=list(similar_indices)
     #x+(1-x)/10
-    
+
     for i in similar_indices:
         nearest_sentences.append(sentences[i])
     rake = RAKE.Rake(RAKE.SmartStopList())
@@ -105,12 +105,13 @@ def similarity_search(index,q,sentences,vectorizer,offset,p=None):
         key_word_list.extend(i[0].split())
     if not key_word_list:
         return [],p
+   
     for i in key_word_list:
-        # print(i,distances)
+        
         b=lemmatize.lemmatize(i)
-        for j in range(len(nearest_sentences1)):
+        for j in range(len(similar_indices)):
             
-            if b not in nearest_sentences1[similar_indices[j]]:
+            if b not in nearest_sentences1[j]:
                 distances[0][j]=distances[0][j]+(1-distances[0][j])/len(key_word_list)
             else:
                 distances[0][j]=distances[0][j]-distances[0][j]/(len(key_word_list))
@@ -120,11 +121,11 @@ def similarity_search(index,q,sentences,vectorizer,offset,p=None):
             if (distances[0][j]>distances[0][j+1]):
                 distances[0][j],distances[0][j+1]=distances[0][j+1],distances[0][j]
                 similar_indices[j],similar_indices[j+1]=similar_indices[j+1],similar_indices[j]
- 
+    
     most_similar=similar_indices[0]
-    similar_indices.sort()
     nearest_sentences=[nearest_sentences[i] for i in range(len(nearest_sentences)) if distances[0][i]<0.4]
     similar_indices=[similar_indices[i] for i in range(len(similar_indices)) if distances[0][i]<0.4]
+    similar_indices.sort()
     try:
         ind=similar_indices.index(most_similar)
         
@@ -190,6 +191,7 @@ def one_line(text,q):
                 "context": text
             },
             "options":{"wait_for_model":True},})
+        print(output)
         if output.get("error") is None:
             break
     
