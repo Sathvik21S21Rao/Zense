@@ -85,7 +85,7 @@ def similarity_search(index,q,sentences,vectorizer,offset,p=None):
         distances, indices = index.search(p, i)
         i+=1
         distances[0]=distances[0]/2
-        if distances[0].std()>0.5:
+        if distances[0].std()>0.3:
             break
     
     nearest_sentences = []
