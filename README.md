@@ -17,3 +17,8 @@ Linux
 ``` bash
 sudo apt-get install ffmpeg
 ```
+## Deployment
+To run the app:
+``` bash
+streamlit run app.py
+```
