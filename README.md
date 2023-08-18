@@ -1,7 +1,13 @@
 # File Insite
 
 ## About
-Upload files and use the chatbot for question answering and summarization.
+File Insite is an innovative app designed to empower users with the remarkable ability to seamlessly upload, thoroughly analyze, and dynamically interact with a wide array of file types. From audio and video to PDFs, text files, and even YouTube videos, our mission is clear: to equip you with potent tools that effortlessly extract insights, provide answers, and unlock valuable knowledge.
+
+## Features
+1) Summarization
+2) One-Line answers
+3) Multi Line answers
+4) A well maintained chat history
 
 ## Installation
 1) Install the python modules required
