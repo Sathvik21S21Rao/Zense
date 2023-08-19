@@ -69,6 +69,7 @@ def login():
             color:coral;
         }</style>''',unsafe_allow_html=True)
         
+        
         columns=st.columns(1)
         
         with columns[0]:
@@ -104,7 +105,8 @@ def login():
 
 def signup():
     st.title(":robot_face: - Sign up")
-    st.markdown("<style>[data-testid='stForm']{border-color:#FC523D; display:flex; justify-content:center; flex-direction:column; flex:flex-wrap;}",unsafe_allow_html=True)
+   
+    st.markdown("<style>[data-testid='stForm']{border-color:#FC523D; display:flex; justify-content:space-around; align-items:center;}",unsafe_allow_html=True)
     st.markdown("<style>.stTextInput > label { color:coral;}</style> ",unsafe_allow_html=True)
     placeholder=st.empty()
     with placeholder.form("sign_up"):
@@ -115,7 +117,7 @@ def signup():
         st.markdown("<div class='container'>Confirm password</div>",unsafe_allow_html=True)
         confirm=st.text_input("## Confirm password","",type="password",label_visibility="collapsed")
         
-        submit = st.form_submit_button("Submit")
+        submit = st.form_submit_button("Submit",type="primary")
         if submit:
             if not is_valid_email(email):
                 st.error("Not a valid email")

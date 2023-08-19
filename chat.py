@@ -184,6 +184,7 @@ def chat_page():
 
             st.session_state["option"]=st.selectbox("Type of answer:",("One Line","Multi Line","Summary"))
             input=""
+            st.markdown("<style> [data-testid='stHorizontalBlock']{  object-fit:contain; align-items:flex-end   ; }",unsafe_allow_html=True)
             if st.session_state["option"]=="Multi Line":
                 columns=st.columns([5,2,2,1])
                 with columns[0]:
@@ -192,12 +193,13 @@ def chat_page():
                     st.write("<br>",unsafe_allow_html=True)
                     run=st.button("**➤**",type="primary",help="Click to run",use_container_width=True)
                 with columns[1]:
-                    offset=st.number_input("Enter offset",min_value=0,max_value=3,)
+                    offset=st.number_input("Surrounding sentences",min_value=0,max_value=3,)
                 with columns[2]:
-                    threshold=st.number_input("Enter threshold",min_value=1,max_value=10)
+                    threshold=st.number_input("Max number of sentences",min_value=1,max_value=10)
 
-                
+            
             elif st.session_state["option"]!="Summary":
+                
                 columns=st.columns([3,1])
                 with columns[0]:
                     input=st.text_input("## Enter query","",key="query")
