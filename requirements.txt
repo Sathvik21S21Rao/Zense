@@ -1,13 +1,16 @@
+numpy
+nltk
 pydub
-pyrebase
 streamlit
 audio-recorder-streamlit
 python-dotenv
 moviepy
 youtube-transcript-api
 spacy==2.1.0
-en-core-web-sm
-neuralcoref
+neuralcoref --no-binary neuralcoref
 streamlit-option-menu
 streamlit-lottie
 python-rake
+mysql-connector-python
+sentence-transformers
+faiss-cpu

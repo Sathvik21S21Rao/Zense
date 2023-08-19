@@ -13,6 +13,7 @@ def video_to_audio(input_video_path, output_audio_path):
     audio_clip.write_audiofile(output_audio_path)
     audio_clip.close()
     video_clip.close()
+    os.remove(input_video_path)
 
 
 def mp3_to_wav(input_file, output_file):
@@ -56,9 +57,10 @@ def audio_to_text(filename):
     for i in range(ctr+1):
         while True:
             output = query(f"./audios/chunk{i}.wav",API_URL,headers)
+            print(output)
             if "error" not in output:
                 break
-        # print(output)
+        #print(output)
         text+=output.get("text","")
     files=os.listdir("./audios")
     for i in files:

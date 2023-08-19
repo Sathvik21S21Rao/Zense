@@ -12,9 +12,9 @@ import re
 import neuralcoref
 import spacy 
 from PyPDF2 import PdfReader
-from sklearn.feature_extraction.text import TfidfVectorizer
-from sentence_transformers import SentenceTransformer
+from sentence_transformers import SentenceTransformer,util
 import RAKE
+
 nltk.download('stopwords')
 nltk.download('punkt')
 load_dotenv()
@@ -66,32 +66,36 @@ def fill_context(text):
     vectorizer = SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')
    
     context=vectorizer.encode(sentences1)
-
+    
     faiss.normalize_L2(context)
     index = faiss.IndexFlatL2(context.shape[1])
     index.add(context)
-    return index,sentences,vectorizer
+    return index,sentences
 
-def similarity_search(index,q,sentences,vectorizer,offset,p=None):
+def similarity_search(index,q,sentences,offset,threshold,p=None):
     
+    vectorizer = SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')
     if p is None:
         q=q.lower()
         q=remove_stopwords(q)
         p=vectorizer.encode([q])
-        faiss.normalize_L2(p)
-       
+    faiss.normalize_L2(p)
+
     i=1
     while i<len(sentences):
         distances, indices = index.search(p, i)
         i+=1
-        distances[0]=distances[0]/2
-        if distances[0].std()>0.3:
+        
+        if distances[0].std()>0.2:
             break
+        prev_distances,prev_indices=distances,indices
     
     nearest_sentences = []
-    similar_indices=indices[0]
+    distances=prev_distances/2
+    
+   
+    similar_indices=prev_indices[0]
     similar_indices=list(similar_indices)
-    #x+(1-x)/10
 
     for i in similar_indices:
         nearest_sentences.append(sentences[i])
@@ -123,9 +127,12 @@ def similarity_search(index,q,sentences,vectorizer,offset,p=None):
                 similar_indices[j],similar_indices[j+1]=similar_indices[j+1],similar_indices[j]
     
     most_similar=similar_indices[0]
-    nearest_sentences=[nearest_sentences[i] for i in range(len(nearest_sentences)) if distances[0][i]<0.4]
     similar_indices=[similar_indices[i] for i in range(len(similar_indices)) if distances[0][i]<0.4]
+    similar_indices=similar_indices[:threshold]
     similar_indices.sort()
+    nearest_sentences=[sentences[i] for i in similar_indices]
+   
+
     try:
         ind=similar_indices.index(most_similar)
         
@@ -167,7 +174,7 @@ def summary(text):
     def query(payload,headers,api_url):
         response = requests.post(api_url, headers=headers, json=payload)
         return response.json()
-    while True:
+    for i in range(10):
         output = query({
             "inputs":text,
             "options":{"wait_for_model":True}
@@ -180,27 +187,30 @@ def summary(text):
 def one_line(text,q):
 
     def query(payload):
-        API_URL = "https://api-inference.huggingface.co/models/deepset/roberta-base-squad2"
+        API_URL="https://api-inference.huggingface.co/models/deepset/tinyroberta-squad2"
         headers = {"Authorization": f"Bearer {hf_token}"}
         response = requests.post(API_URL, headers=headers, json=payload)
         return response.json()
-    while True:
+    for i in range(10):
         output = query({
             "inputs": {
                 "question": q,
                 "context": text
             },
             "options":{"wait_for_model":True},})
-        print(output)
+        
         if output.get("error") is None:
-            break
+            return output.get("answer")
+    else:
+        return None
+
     
-    return output.get("answer")
+    
 
 def title_generator(text):
 
     API_URL = "https://api-inference.huggingface.co/models/czearing/article-title-generator"
-    headers = {"Authorization": "Bearer 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"}
+    headers = {"Authorization": f"Bearer {hf_token}"}
 
     def query(payload):
         response = requests.post(API_URL, headers=headers, json=payload)
@@ -210,6 +220,7 @@ def title_generator(text):
             "inputs": text,
             "options":{"wait_for_model":True}
         })
+        
         if "error" not in output:
             break
     

@@ -21,7 +21,10 @@ def main():
     # st.write('<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">', unsafe_allow_html=True)
     if "logged_in" not in st.session_state:
         st.session_state["logged_in"]=False 
-    if not st.session_state["logged_in"]:
+    if st.session_state.get("forgot"):
+        forgot_password()
+        
+    elif not st.session_state["logged_in"]:
         tabs=st.tabs(["**About**","**Login**","**Sign up**"],)
         with tabs[0]:
             about()

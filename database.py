@@ -5,6 +5,15 @@ import uuid
 import hashlib
 import pickle
 
+import random
+import string
+
+def generate_password(length=12):
+    characters = string.ascii_letters + string.digits + string.punctuation
+    password = ''.join(random.choice(characters) for _ in range(length))
+    return password
+
+
 def hash_password_sha256(plain_password, salt=None):
     if salt is None:
         salt = os.urandom(32)
@@ -21,6 +30,30 @@ def verify_password_sha256(plain_password, hashed_password):
     rehashed_password = hash_password_sha256(plain_password, salt)
     return hashed_password == rehashed_password
 
+def check_user(email):
+    load_dotenv()
+    mysql_user=os.environ.get("mysql_user")
+    mysql_pass=os.environ.get("mysql_password")
+    con=m.connect(user=mysql_user,password=mysql_pass,db="ai_chat",host="localhost")
+    if con.is_connected():
+        cursor=con.cursor()
+        sql=f'''select * from Users where email="{email}"'''
+        cursor.execute(sql)
+        row=cursor.fetchone()
+        return bool(row)
+    return False
+
+def get_password(email):
+    load_dotenv()
+    mysql_user=os.environ.get("mysql_user")
+    mysql_pass=os.environ.get("mysql_password")
+    con=m.connect(user=mysql_user,password=mysql_pass,db="ai_chat",host="localhost")
+    if con.is_connected():
+        cursor=con.cursor()
+        sql=f'''select * from Users where email="{email}"'''
+        cursor.execute(sql)
+        row=cursor.fetchone()
+        return row[1]
 
 def create_user(email,password):
     load_dotenv()
@@ -88,6 +121,19 @@ def reset_password(userid,old_password,new_password):
         else:
             con.close()
             return False
+def change_forgot_password(email,new_password):
+    load_dotenv()
+    mysql_user=os.environ.get("mysql_user")
+    mysql_pass=os.environ.get("mysql_password")
+    con=m.connect(user=mysql_user,password=mysql_pass,db="ai_chat",host="localhost")
+    if con.is_connected():
+        cursor=con.cursor()
+        sql=f'''update Users set password="{hash_password_sha256(new_password)}" where email="{email}"'''
+        cursor.execute(sql)
+        con.commit()
+        con.close()
+        
+
 def delete(userid):
     load_dotenv()
     mysql_user=os.environ.get("mysql_user")

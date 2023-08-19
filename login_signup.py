@@ -2,18 +2,61 @@ import streamlit as st
 from database import *
 import json 
 from streamlit_lottie import st_lottie
-import requests 
+import re
+import smtplib
+from dotenv import load_dotenv
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+import os,time
+
+def send_email(recipient_email):
+    load_dotenv()
+    sender_email=os.environ.get("server_email_user")
+    sender_password=os.environ.get("server_email_pass")
+    subject = "Forgot Password"
+    new_password=generate_password()
+    change_forgot_password(recipient_email,new_password)
+    message = f"Your new password is {new_password}. If you want to change the password, login and reset the password"
+    msg = MIMEMultipart()
+
+    msg['From'] = sender_email
+    msg['To'] = recipient_email
+    msg['Subject'] = subject
+
+    msg.attach(MIMEText(message, 'plain'))
+    server = smtplib.SMTP('smtp.gmail.com', 587)
+    server.starttls()  
+
+    server.login(sender_email, sender_password)
+    server.sendmail(sender_email, recipient_email, msg.as_string())
+    server.quit()
+
+def forgot_password():
+    st.title(":robot_face: Forgot Password")
+    with st.form("Forgot Password"):
+        email=st.text_input(label="Enter email")
+        if st.form_submit_button("Submit"):
+            if check_user(email):
+                
+                with st.spinner("Sending email"):
+                    send_email(email)
+                    time.sleep(2)
+                    st.success("Email has been sent")
+                    time.sleep(2)
+                
+                st.session_state.forgot=False
+                st.experimental_rerun()
+
+            else:
+                st.error("Email does not exist")
+
 def load_robot_lottie():
     with open("./style_files/robot.json") as fh:
         return json.load(fh)
     
-def emailverifier(email):
-    response = requests.get(
-        "https://isitarealemail.com/api/email/validate",
-        params = {'email': email})
-
-    status = response.json()['status']
-    if status=="valid":
+def is_valid_email(email):
+    pattern = r'^[\w\.-]+@[\w\.-]+\.\w+$'
+    if re.match(pattern, email):
         return True
     else:
         return False
@@ -38,7 +81,8 @@ def login():
                 st.markdown('<div class="container"><i class="fa-solid fa-lock"></i> Password</div>',unsafe_allow_html=True)
                 password = st.text_input("pass",type="password",label_visibility="collapsed")
                 
-                submit = st.form_submit_button("Submit",)
+                submit = st.form_submit_button("Submit",type="primary")
+                
                 if submit:
                     check=validate_login(email=email,password=password)
                     if check==False:
@@ -50,6 +94,11 @@ def login():
                         st.session_state["user"]=check
                         st.session_state["logged_in"]=True
                         st.experimental_rerun()
+            forget_password=st.button("Forgot password")
+            if forget_password:
+                st.session_state["forgot"]=True
+                st.experimental_rerun()
+            
     
 
 
@@ -68,8 +117,8 @@ def signup():
         
         submit = st.form_submit_button("Submit")
         if submit:
-            # if not emailverifier(email=email):
-            #     st.error("Not a valid email")
+            if not is_valid_email(email):
+                st.error("Not a valid email")
             if passw!=confirm:
                 st.error("Passwords don't match")
             else:

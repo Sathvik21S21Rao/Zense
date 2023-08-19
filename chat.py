@@ -63,11 +63,17 @@ def chat_page():
             except:
                 d={}
             for i in d:
+                ctr=1
                 if st.session_state["user"] in i:
                     if d[i].get("title") is not None:
                         st.session_state["chat_ids"].append(i)
                         st.session_state["previous_chats"].append(d[i])
-                        st.session_state["previous_titles"].append(d[i]["title"])
+                        if d[i]["title"] not in st.session_state["previous_titles"]:
+                            st.session_state["previous_titles"].append(d[i]["title"])
+                        else:
+                            st.session_state["previous_titles"].append(d[i]["title"]+str(ctr))
+                            ctr+=1
+                            
             st.session_state["loaded"]=True
 
     
@@ -145,12 +151,12 @@ def chat_page():
                                             else:
                                                 save_uploaded_file("videos",files[i])
                                                 path=f"./videos/{files[i].name}"
-                                                au=video_to_audio(path,(path.replace("videos","audios")).replace("mp4","mp3"))
-                                                x=audio_to_text(files[i].name)
+                                                au=video_to_audio(path,f"./audios/{files[i].name}".replace("mp4","mp3"))
+                                                x=audio_to_text(f"{files[i].name}".replace("mp4","mp3"))
                                                 text=text+x+"."
                                     
-                                        index,sentences,vectorizer=fill_context(text)
-                                        d={"title":title_generator(text),"index":index,"text":text,"sentences":sentences,"chat_history":[],"vectorizer":vectorizer}
+                                        index,sentences=fill_context(text)
+                                        d={"title":title_generator(text),"index":index,"text":text,"sentences":sentences,"chat_history":[]}
                                         st.session_state["chat_info"]=d
                                         st.session_state["chat_id"]=new_chat(st.session_state["user"])
                                         st.session_state["computed"]=True
@@ -179,14 +185,17 @@ def chat_page():
             st.session_state["option"]=st.selectbox("Type of answer:",("One Line","Multi Line","Summary"))
             input=""
             if st.session_state["option"]=="Multi Line":
-                columns=st.columns([6,2,1])
+                columns=st.columns([5,2,2,1])
                 with columns[0]:
                     input=st.text_input("## Enter query","",key="query")
-                with columns[2]:
+                with columns[3]:
                     st.write("<br>",unsafe_allow_html=True)
-                    run=st.button("**➤**",type="primary",help="Click to run")
+                    run=st.button("**➤**",type="primary",help="Click to run",use_container_width=True)
                 with columns[1]:
                     offset=st.number_input("Enter offset",min_value=0,max_value=3,)
+                with columns[2]:
+                    threshold=st.number_input("Enter threshold",min_value=1,max_value=10)
+
                 
             elif st.session_state["option"]!="Summary":
                 columns=st.columns([3,1])
@@ -202,7 +211,7 @@ def chat_page():
                     st.session_state["chat_info"]["chat_history"].append({"question":"Give Summary","response":response.replace("\n","<br><br>")})
                 elif input!="" and st.session_state["option"]=="Multi Line" and run:
                     p=None
-                    response,p=similarity_search(st.session_state["chat_info"]["index"],input,st.session_state["chat_info"]["sentences"],st.session_state["chat_info"]["vectorizer"],offset)
+                    response,p=similarity_search(st.session_state["chat_info"]["index"],input,st.session_state["chat_info"]["sentences"],offset,threshold)
                     
                     response="\n".join(response)
                     if response.strip()=="":
@@ -211,8 +220,10 @@ def chat_page():
                     st.session_state["chat_info"]["chat_history"].append({"question":input+"- Multi Line","response":response.replace("\n","<br><br>")})
                 elif input!="" and run:
                     response=one_line(st.session_state["chat_info"]["text"],input)
-                    
-                    st.session_state["chat_info"]["chat_history"].append({"question":input+" -One Line","response":response.replace("\n","<br><br>")})
+                    if response is not None:
+                        st.session_state["chat_info"]["chat_history"].append({"question":input+" -One Line","response":response.replace("\n","<br><br>")})
+                    else:
+                        st.error("Sorry some error occured. Please try again later")
                     
                 if "chat_history" in st.session_state["chat_info"]:
                     # print(st.session_state["chat_info"]["sentences"])
