@@ -42,3 +42,5 @@ To run the app:
 ``` bash
 streamlit run app.py
 ```
+## Demo
+[![IMAGE ALT TEXT HERE](https://img.youtube.com/vi/yDRwzJC0mfM/0.jpg)](https://www.youtube.com/watch?v=yDRwzJC0mfM)
