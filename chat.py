@@ -206,11 +206,15 @@ def chat_page():
                 with columns[1]:
                     st.write("<br>",unsafe_allow_html=True)
                     run=st.button("**➤**",type="primary",)
-            st.divider()
+                st.divider()
             if st.session_state.get("computed"):
                 if st.session_state["option"]=="Summary":
-                    response=summary(st.session_state["chat_info"]["text"])
-                    st.session_state["chat_info"]["chat_history"].append({"question":"Give Summary","response":response.replace("\n","<br><br>")})
+                    run=st.button("**Give summary ➤**",type="primary",help="Click to run",)
+                    st.divider()
+                    if run:
+                        response=summary(st.session_state["chat_info"]["text"])
+                        
+                        st.session_state["chat_info"]["chat_history"].append({"question":"Give Summary","response":response.replace("\n","<br><br>")})
                 elif input!="" and st.session_state["option"]=="Multi Line" and run:
                     p=None
                     response,p=similarity_search(st.session_state["chat_info"]["index"],input,st.session_state["chat_info"]["sentences"],offset,threshold)

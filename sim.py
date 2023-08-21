@@ -109,16 +109,18 @@ def similarity_search(index,q,sentences,offset,threshold,p=None):
         key_word_list.extend(i[0].split())
     if not key_word_list:
         return [],p
-   
+    
     for i in key_word_list:
         
         b=lemmatize.lemmatize(i)
         for j in range(len(similar_indices)):
             
             if b not in nearest_sentences1[j]:
+                
                 distances[0][j]=distances[0][j]+(1-distances[0][j])/len(key_word_list)
             else:
                 distances[0][j]=distances[0][j]-distances[0][j]/(len(key_word_list))
+                
 
     for i in range(len(distances[0])):
         for j in range(len(distances[0])-1-i):
@@ -127,7 +129,9 @@ def similarity_search(index,q,sentences,offset,threshold,p=None):
                 similar_indices[j],similar_indices[j+1]=similar_indices[j+1],similar_indices[j]
     
     most_similar=similar_indices[0]
+    print(sentences[most_similar])
     similar_indices=[similar_indices[i] for i in range(len(similar_indices)) if distances[0][i]<0.4]
+    
     similar_indices=similar_indices[:threshold]
     similar_indices.sort()
     nearest_sentences=[sentences[i] for i in similar_indices]
