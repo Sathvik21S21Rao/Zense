@@ -37,10 +37,20 @@ To run this project, you will need to add the following environment variables to
 
 `server_email_pass` email app password
 
+## API models Used
+| API model  |  Link |
+| --------------- |-----------------------------|
+| tinyroberta-squad2 | https://api-inference.huggingface.co/models/deepset/tinyroberta-squad2 |
+| article-title-generator| https://api-inference.huggingface.co/models/czearing/article-title-generator |
+| whisper-large-v2 |https://api-inference.huggingface.co/models/openai/whisper-large-v2 |
+| fullstop-punctuation-multilang-large | https://api-inference.huggingface.co/models/oliverguhr/fullstop-punctuation-multilang-large |
+   
+
 ## Deployment
 To run the app:
 ``` bash
 streamlit run app.py
 ```
 ## Demo
-[![IMAGE ALT TEXT HERE](https://img.youtube.com/vi/yDRwzJC0mfM/0.jpg)](https://www.youtube.com/watch?v=yDRwzJC0mfM)
+### Here is a small demo of the project
+[!["Zense"](https://img.youtube.com/vi/yDRwzJC0mfM/0.jpg)](https://www.youtube.com/watch?v=yDRwzJC0mfM)
