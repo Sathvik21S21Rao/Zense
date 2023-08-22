@@ -54,4 +54,4 @@ streamlit run app.py
 ## Demo
 ### Here is a small demo of the project
 [!["File Insite"](https://img.youtube.com/vi/yDRwzJC0mfM/0.jpg)](https://www.youtube.com/watch?v=yDRwzJC0mfM "File Insite")
-### For more information look into the documentation: 
+### For more information look into the documentation: [documentation.pdf](https://github.com/Sathvik21S21Rao/Zense/blob/main/documentation.pdf)
